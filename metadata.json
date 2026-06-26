@@ -1,0 +1,6 @@
+{
+  "name": "Búsqueda y Reencuentro Venezuela",
+  "description": "Plataforma de ayuda humanitaria para reportar personas encontradas y buscar seres queridos desaparecidos utilizando reconocimiento facial.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
