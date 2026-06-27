@@ -1,13 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+:root {
+  --bg-app: #e2e8f0; /* Un blanco/azul más oscuro para dar contraste a las tarjetas */
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 body {
-  background-color: #faf9f6; /* Beautiful soft warm off-white */
+  background-color: var(--bg-app);
   color: #1e293b;
   font-family: var(--font-sans);
 }

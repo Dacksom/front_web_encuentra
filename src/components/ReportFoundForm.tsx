@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { PlusCircle, Camera, Upload, AlertCircle, FileText, MapPin, Phone, Building, Check, Heart, User, HelpCircle } from 'lucide-react';
+import { PlusCircle, Camera, Upload, AlertCircle, FileText, MapPin, Phone, Building, Check, Heart, User, HelpCircle, Baby } from 'lucide-react';
 import { FoundPerson } from '../types';
 
 interface ReportFoundFormProps {
@@ -23,14 +23,10 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
   const [status, setStatus] = useState<'refugiado' | 'hospitalizado'>('refugiado');
   const [isChild, setIsChild] = useState(false);
   
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Handle local file load
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,56 +41,6 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
     }
   };
 
-  // HTML5 Real Camera activation
-  const startCamera = async () => {
-    setIsCameraActive(true);
-    setCameraError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch (err: any) {
-      console.warn("webcam not available or permission denied", err);
-      setCameraError("No se pudo iniciar la cámara (asegúrate de otorgar permisos o usa la subida de archivos).");
-      setIsCameraActive(false);
-    }
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg');
-        setSelectedImage(dataUrl);
-        
-        // Stop camera streams
-        const stream = video.srcObject as MediaStream;
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-        }
-        setIsCameraActive(false);
-        setError(null);
-      }
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    }
-    setIsCameraActive(false);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -103,16 +49,12 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
       setError("Por favor, ingresa el nombre del hospital, refugio o centro de rescate.");
       return;
     }
-    if (!isChild && !locationAddress.trim()) {
-      setError("Por favor, ingresa la dirección física detallada de la persona.");
-      return;
-    }
     if (!contactPhone.trim()) {
       setError("Por favor, proporciona un número telefónico de contacto.");
       return;
     }
     if (!physicalDescription.trim()) {
-      setError("Por favor, describe el estado físico y características particulares.");
+      setError("Por favor, escribe una observación o descripción detallada.");
       return;
     }
     if (!selectedImage) {
@@ -158,12 +100,12 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6" id="report-found-view">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 mb-6 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
             <PlusCircle size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Reportar Persona Encontrada</h2>
-            <p className="text-sm text-slate-500">Agrega registros para indexar en la base de datos de reconocimiento facial.</p>
+            <h2 className="text-lg font-bold text-slate-800">Reportar Persona Encontrada</h2>
+            <p className="text-sm text-slate-500">Agrega el registro de una persona encontrada a la base de datos.</p>
           </div>
         </div>
         <button
@@ -251,39 +193,16 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
           {/* Facial image camera vs file section */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <Camera size={14} className="text-slate-400" />
-              Fotografía del Rostro (Requerido para DeepFace)
+              <Camera size={14} className="text-blue-600" />
+              Fotografía de la Persona
             </label>
 
-            {isCameraActive ? (
-              <div className="relative border border-slate-200 rounded-xl bg-slate-950 overflow-hidden text-center p-2" id="webcam-capture-area">
-                <video ref={videoRef} className="w-full max-w-sm h-64 mx-auto object-cover rounded-lg" playsInline muted></video>
-                <div className="flex gap-2 justify-center mt-3">
-                  <button
-                    type="button"
-                    onClick={capturePhoto}
-                    className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-lg text-xs transition-all shadow-sm"
-                    id="btn-capture-snapshot"
-                  >
-                    Tomar Foto
-                  </button>
-                  <button
-                    type="button"
-                    onClick={stopCamera}
-                    className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-semibold rounded-lg text-xs transition-all"
-                    id="btn-cancel-camera"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-                <canvas ref={canvasRef} className="hidden"></canvas>
-              </div>
-            ) : selectedImage ? (
-              <div className="flex items-center gap-4 bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+            {selectedImage ? (
+              <div className="flex items-center gap-4 bg-slate-50 border border-blue-600 rounded-xl p-3.5">
                 <img
                   src={selectedImage}
                   alt="Previsualización"
-                  className="w-20 h-20 object-cover rounded-lg border border-slate-200"
+                  className="w-20 h-20 object-cover rounded-lg border border-blue-600"
                   referrerPolicy="no-referrer"
                 />
                 <div className="space-y-1">
@@ -295,237 +214,188 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-md text-[10px] font-semibold transition-all"
+                      className="px-2.5 py-1 bg-white hover:bg-blue-50 border border-blue-600 text-slate-700 rounded-md text-[10px] font-semibold transition-all"
                       id="btn-change-uploaded-img"
                     >
-                      Subir otro
-                    </button>
-                    <button
-                      type="button"
-                      onClick={startCamera}
-                      className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded-md text-[10px] font-semibold transition-all flex items-center gap-1"
-                      id="btn-retake-cam"
-                    >
-                      <Camera size={10} />
-                      Usar Cámara
+                      Subir otra imagen
                     </button>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3" id="image-upload-selectors">
-                {/* File Upload choice */}
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/5 rounded-xl p-5 text-center cursor-pointer transition-all"
-                >
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                  <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center mx-auto mb-2.5">
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-blue-600 hover:border-blue-700 hover:bg-blue-50/30 rounded-xl p-6 text-center cursor-pointer transition-all"
+                id="file-upload-only"
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <div className="space-y-1 py-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mx-auto mb-2">
                     <Upload size={18} />
                   </div>
-                  <p className="text-xs font-bold text-slate-700">Subir Archivo de Imagen</p>
-                  <p className="text-[10px] text-slate-400 mt-1">Soporta JPG, PNG desde la galería</p>
-                </div>
-
-                {/* Camera Capture choice */}
-                <div
-                  onClick={startCamera}
-                  className="border-2 border-dashed border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/5 rounded-xl p-5 text-center cursor-pointer transition-all"
-                >
-                  <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center mx-auto mb-2.5">
-                    <Camera size={18} />
-                  </div>
-                  <p className="text-xs font-bold text-slate-700">Tomar Foto con Cámara</p>
-                  <p className="text-[10px] text-slate-400 mt-1">Captura directa desde laptop o celular</p>
+                  <p className="text-sm font-semibold text-slate-700">Haz clic para subir la foto</p>
+                  <p className="text-xs text-slate-400">Formatos JPG o PNG (rostro frontal claro)</p>
                 </div>
               </div>
             )}
-            {cameraError && <p className="text-[11px] text-red-500">{cameraError}</p>}
           </div>
 
           {/* Form inputs section */}
-          <div className="space-y-4">
+          <div className="space-y-5 bg-slate-200 p-5 sm:p-6 rounded-2xl border border-slate-300/50 mt-6 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]">
             {/* Child Toggle Switch */}
-            <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3" id="child-toggle-container">
+            <div className="bg-white border-2 border-amber-200/60 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm" id="child-toggle-container">
               <div>
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">¿Es un niño, niña o adolescente menor de edad?</span>
-                <span className="text-[11px] text-slate-400 block mt-0.5">La protección de identidad se activará automáticamente de ser afirmativo.</span>
+                <span className="text-sm font-black text-slate-800 uppercase tracking-wider block flex items-center gap-2">
+                  <Baby size={20} className="text-amber-500" />
+                  ¿Es menor de edad?
+                </span>
+                <p className="text-xs text-slate-500 mt-1">Activa esta opción para aplicar protección de identidad.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsChild(!isChild)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 ${
+                className={`px-6 py-3 rounded-xl text-sm font-extrabold transition-all duration-300 shrink-0 flex items-center justify-center gap-2 shadow-sm border-2 ${
                   isChild
-                    ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-sm'
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                    ? 'bg-amber-500 border-amber-500 hover:bg-amber-600 text-white shadow-[0_4px_20px_rgba(245,158,11,0.4)] scale-105'
+                    : 'bg-amber-50 border-amber-400 text-amber-700 hover:bg-amber-100 hover:border-amber-500 hover:shadow-md'
                 }`}
                 id="btn-toggle-child"
               >
-                {isChild ? 'SÍ, ES MENOR DE EDAD' : 'NO, ES MAYOR DE EDAD'}
+                {isChild ? <Check size={18} /> : <Baby size={18} />}
+                {isChild ? 'MENOR PROTEGIDO' : 'SÍ, ES MENOR'}
               </button>
             </div>
-
-            {isChild && (
-              <div className="bg-rose-50/40 border border-rose-100 rounded-xl p-3.5 flex gap-3 items-start" id="child-protection-banner">
-                <span className="text-xl">🧒</span>
-                <div className="text-[11px] text-rose-800 leading-normal">
-                  <strong className="block font-bold">Protección del menor activada:</strong>
-                  De acuerdo con los lineamientos de resguardo humanitario, el nombre y la cédula no se registrarán para proteger la identidad del menor. Solo se registrará el teléfono de contacto y la descripción física para que sus padres puedan reconocerle a través de cotejo facial seguro.
-                </div>
-              </div>
-            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Optional Name */}
               {!isChild && (
                 <div className="space-y-1.5" id="name-input-wrapper">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                    <User size={13} className="text-slate-400" />
+                  <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
                     Nombre Completo (Opcional)
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Dejar vacío si no habla / desconoce"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:bg-white rounded-xl text-slate-800 text-xs placeholder-slate-400 outline-none transition-all font-medium"
-                    id="person-name-input"
-                  />
+                  <div className="relative">
+                    {!name && (
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <User size={16} className="text-slate-400" />
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Nombre o desconocido"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className={`w-full pr-4 py-2.5 bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-slate-800 text-sm placeholder-slate-400 outline-none transition-all font-medium shadow-sm ${name ? 'pl-4' : 'pl-10'}`}
+                      id="person-name-input"
+                    />
+                  </div>
                 </div>
               )}
 
               {/* Optional CI */}
               {!isChild && (
                 <div className="space-y-1.5" id="ci-input-wrapper">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                    <FileText size={13} className="text-slate-400" />
+                  <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
                     Cédula de Identidad (Opcional)
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Ej: V-23.900.512 o desconocido"
-                    value={ci}
-                    onChange={(e) => setCi(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:bg-white rounded-xl text-slate-800 text-xs placeholder-slate-400 outline-none transition-all font-medium"
-                    id="person-ci-input"
-                  />
+                  <div className="relative">
+                    {!ci && (
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <FileText size={16} className="text-slate-400" />
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      placeholder="Ej: V-23.900.512 o desconocido"
+                      value={ci}
+                      onChange={(e) => setCi(e.target.value)}
+                      className={`w-full pr-4 py-2.5 bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-slate-800 text-sm placeholder-slate-400 outline-none transition-all font-medium shadow-sm ${ci ? 'pl-4' : 'pl-10'}`}
+                      id="person-ci-input"
+                    />
+                  </div>
                 </div>
               )}
 
             {/* Hospital/Shelter Center Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                <Building size={13} className="text-slate-400" />
+              <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
                 Refugio, Hospital o Ente Receptivo
               </label>
-              <input
-                type="text"
-                placeholder="Ej: Refugio Polideportivo de Catia"
-                value={hospitalName}
-                onChange={(e) => setHospitalName(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:bg-white rounded-xl text-slate-800 text-xs placeholder-slate-400 outline-none transition-all font-medium"
-                id="hospital-name-input"
-              />
+              <div className="relative">
+                {!hospitalName && (
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Building size={16} className="text-slate-400" />
+                  </div>
+                )}
+                <input
+                  type="text"
+                  placeholder="Ej: Refugio Polideportivo de Catia"
+                  value={hospitalName}
+                  onChange={(e) => setHospitalName(e.target.value)}
+                  className={`w-full pr-4 py-2.5 bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-slate-800 text-sm placeholder-slate-400 outline-none transition-all font-medium shadow-sm ${hospitalName ? 'pl-4' : 'pl-10'}`}
+                  id="hospital-name-input"
+                />
+              </div>
             </div>
 
             {/* Contact Phone */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                <Phone size={13} className="text-slate-400" />
+              <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
                 Teléfono de Contacto Directo
               </label>
-              <input
-                type="text"
-                placeholder="Ej: +58 412-1234567"
-                value={contactPhone}
-                onChange={(e) => setContactPhone(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:bg-white rounded-xl text-slate-800 text-xs placeholder-slate-400 outline-none transition-all font-medium"
-                id="contact-phone-input"
-              />
-            </div>
-
-            {/* Status Class */}
-            <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                Estado Operativo / Clasificación inicial
-              </label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setStatus('refugiado')}
-                  className={`py-2 px-3 border rounded-xl text-xs font-bold transition-all ${
-                    status === 'refugiado'
-                      ? 'border-emerald-500 bg-emerald-50/25 text-emerald-700'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                  id="btn-status-refugiado"
-                >
-                  En Refugio / Albergue
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStatus('hospitalizado')}
-                  className={`py-2 px-3 border rounded-xl text-xs font-bold transition-all ${
-                    status === 'hospitalizado'
-                      ? 'border-emerald-500 bg-emerald-50/25 text-emerald-700'
-                      : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                  id="btn-status-hospitalizado"
-                >
-                  Internado en Hospital / Clínica
-                </button>
-              </div>
-            </div>
-
-            {/* Address Details */}
-            {!isChild && (
-              <div className="sm:col-span-2 space-y-1.5" id="location-address-wrapper">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                  <MapPin size={13} className="text-slate-400" />
-                  Dirección Física Actual (Ubicación de la Persona)
-                </label>
-                <textarea
-                  placeholder="Especificar piso, número de sala, colchoneta, cuadra o detalles que faciliten encontrarlo"
-                  rows={2}
-                  value={locationAddress}
-                  onChange={(e) => setLocationAddress(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:bg-white rounded-xl text-slate-800 text-xs placeholder-slate-400 outline-none transition-all font-medium resize-none"
-                  id="location-address-input"
+              <div className="relative">
+                {!contactPhone && (
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Phone size={16} className="text-slate-400" />
+                  </div>
+                )}
+                <input
+                  type="text"
+                  placeholder="Ej: +58 412-1234567"
+                  value={contactPhone}
+                  onChange={(e) => setContactPhone(e.target.value)}
+                  className={`w-full pr-4 py-2.5 bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-slate-800 text-sm placeholder-slate-400 outline-none transition-all font-medium shadow-sm ${contactPhone ? 'pl-4' : 'pl-10'}`}
+                  id="contact-phone-input"
                 />
               </div>
-            )}
+            </div>
 
-            {/* Physical Description */}
+            {/* Observation Field */}
             <div className="sm:col-span-2 space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                <FileText size={13} className="text-slate-400" />
-                Descripción Física Completa y Vestimenta
+              <label className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                Observación
               </label>
-              <textarea
-                placeholder="Ej: Hombre, estatura aprox 1.70, tez morena, cicatriz pequeña en la frente. Vestía camisa azul polo, short de jean. No posee calzado. Se encuentra un poco asustado pero bien de salud general."
-                rows={3}
-                value={physicalDescription}
-                onChange={(e) => setPhysicalDescription(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:bg-white rounded-xl text-slate-800 text-xs placeholder-slate-400 outline-none transition-all font-medium resize-none"
-                id="physical-desc-input"
-              />
+              <div className="relative">
+                {!physicalDescription && (
+                  <div className="absolute top-3 left-0 pl-3.5 flex items-start pointer-events-none">
+                    <FileText size={16} className="text-slate-400" />
+                  </div>
+                )}
+                <textarea
+                  placeholder="Describe toda la información posible..."
+                  rows={4}
+                  value={physicalDescription}
+                  onChange={(e) => setPhysicalDescription(e.target.value)}
+                  className={`w-full pr-4 py-2.5 bg-white border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl text-slate-800 text-sm placeholder-slate-400 outline-none transition-all font-medium shadow-sm resize-none ${physicalDescription ? 'pl-4' : 'pl-10'}`}
+                  id="observation-input"
+                />
+              </div>
             </div>
           </div>
           </div>
 
           <button
             type="submit"
-            className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2"
             id="btn-submit-report"
           >
-            <PlusCircle size={16} />
-            Indexar Persona en la Red Humanitaria
+            <PlusCircle size={18} />
+            Reportar Persona Encontrada
           </button>
         </form>
       )}
