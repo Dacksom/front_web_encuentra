@@ -1,0 +1,36 @@
+# --- Build ---
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# --- Proxy del API ---
+# El backend NO expone CORS. El front llama a /api (relativo) y Netlify
+# lo reenvía del lado del servidor a symtechven.com. DEBE ir antes del SPA.
+[[redirects]]
+  from = "/api/*"
+  to = "https://symtechven.com/api/:splat"
+  status = 200
+  force = true
+
+# --- Fallback SPA ---
+# Cualquier ruta inexistente sirve index.html (los archivos reales tienen
+# prioridad, así que /sw.js, /manifest.webmanifest y /assets no se reescriben).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# --- Headers ---
+# SW y manifest sin cache agresivo: que las actualizaciones lleguen rápido.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"

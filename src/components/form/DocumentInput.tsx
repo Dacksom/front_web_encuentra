@@ -6,36 +6,28 @@
  * Compartido por buscar/reportar.
  */
 import React from 'react';
+import { inputClasses } from './Field';
 
 export const DOC_TYPES = ['V', 'E', 'J', 'P', 'G', 'C', 'R'];
-
-const RING = {
-  rose: 'focus:border-rose-500 focus:ring-rose-500/20',
-  blue: 'focus:border-blue-500 focus:ring-blue-500/20',
-};
 
 interface Props {
   tipo: string;
   numero: string;
   onTipo: (v: string) => void;
   onNumero: (v: string) => void;
-  accent: keyof typeof RING;
+  accent: 'blue' | 'rose';
   error?: boolean;
   numeroId?: string;
 }
 
 export default function DocumentInput({ tipo, numero, onTipo, onNumero, accent, error, numeroId }: Props) {
-  const base = 'bg-white border rounded-xl text-slate-800 text-sm outline-none transition-all shadow-sm focus:ring-2';
-  const numBorder = error ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : `border-slate-200 ${RING[accent]}`;
+  const selectCls = `px-3 py-2.5 font-bold shrink-0 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm outline-none transition-all shadow-sm focus:ring-2 ${
+    accent === 'rose' ? 'focus:border-rose-500 focus:ring-rose-500/20' : 'focus:border-blue-500 focus:ring-blue-500/20'
+  }`;
 
   return (
     <div className="flex gap-2">
-      <select
-        value={tipo}
-        onChange={(e) => onTipo(e.target.value)}
-        className={`px-3 py-2.5 font-bold shrink-0 ${base} border-slate-200 ${RING[accent]}`}
-        aria-label="Tipo de documento"
-      >
+      <select value={tipo} onChange={(e) => onTipo(e.target.value)} className={selectCls} aria-label="Tipo de documento">
         {DOC_TYPES.map((t) => (
           <option key={t} value={t}>{t}</option>
         ))}
@@ -47,7 +39,7 @@ export default function DocumentInput({ tipo, numero, onTipo, onNumero, accent, 
         maxLength={9}
         value={numero}
         onChange={(e) => onNumero(e.target.value.replace(/\D/g, ''))}
-        className={`w-full px-3.5 py-2.5 font-medium placeholder-slate-400 ${base} ${numBorder}`}
+        className={inputClasses(accent, error)}
         id={numeroId}
       />
     </div>

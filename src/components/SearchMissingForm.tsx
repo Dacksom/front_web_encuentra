@@ -10,6 +10,8 @@ import { buscarPersona } from '../api';
 import PhotoUploader, { Photo } from './form/PhotoUploader';
 import HelpModal, { HelpStep } from './form/HelpModal';
 import DocumentInput from './form/DocumentInput';
+import { useFormDraft } from './form/useFormDraft';
+import { inputClasses } from './form/Field';
 
 interface SearchMissingFormProps {
   onTriggerReunion: (person: FoundPerson) => void;
@@ -28,10 +30,11 @@ const HELP_STEPS: HelpStep[] = [
 
 export default function SearchMissingForm({ onTriggerReunion }: SearchMissingFormProps) {
   const [showHelp, setShowHelp] = useState(false);
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [qNombre, setQNombre] = useState('');
-  const [qDocTipo, setQDocTipo] = useState('V');
-  const [qDocNumero, setQDocNumero] = useState('');
+  // Persistido entre cambios de pestaña (draft 'search.*')
+  const [photos, setPhotos] = useFormDraft<Photo[]>('search.photos', []);
+  const [qNombre, setQNombre] = useFormDraft('search.qNombre', '');
+  const [qDocTipo, setQDocTipo] = useFormDraft('search.qDocTipo', 'V');
+  const [qDocNumero, setQDocNumero] = useFormDraft('search.qDocNumero', '');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisStep, setAnalysisStep] = useState('');
@@ -60,18 +63,15 @@ export default function SearchMissingForm({ onTriggerReunion }: SearchMissingFor
   const startAnalysis = (e: React.FormEvent) => {
     e.preventDefault();
     if (inFlight.current) return; // ya hay una búsqueda en curso, ignora el reintento
-    if (photos.length === 0) {
-      setError('Por favor, selecciona o sube al menos una foto de la persona que buscas.');
-      return;
-    }
-    if (!qNombre.trim() && !qDocNumero.trim()) {
-      setIdError('Indica al menos el nombre o la cédula de quien buscas.');
-      return;
-    }
+
+    // Valida todo de una: ambos errores salen en el mismo click
+    const noPhoto = photos.length === 0;
+    const noId = !qNombre.trim() && !qDocNumero.trim();
+    setError(noPhoto ? 'Por favor, selecciona o sube al menos una foto de la persona que buscas.' : null);
+    setIdError(noId ? 'Indica al menos el nombre o la cédula de quien buscas.' : null);
+    if (noPhoto || noId) return;
 
     inFlight.current = true;
-    setError(null);
-    setIdError(null);
     setIsAnalyzing(true);
     setAnalysisProgress(0);
     setAnalysisStep('Subiendo fotos...');
@@ -142,9 +142,6 @@ export default function SearchMissingForm({ onTriggerReunion }: SearchMissingFor
   const totalPages = searchResults ? Math.ceil(searchResults.length / PAGE_SIZE) : 0;
   const pageItems = searchResults ? searchResults.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE) : [];
 
-  const idInputClass = `w-full px-3.5 py-2.5 bg-white border focus:ring-2 rounded-xl text-slate-800 text-sm placeholder-slate-400 outline-none transition-all font-medium shadow-sm ${
-    idError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-slate-200 focus:border-rose-500 focus:ring-rose-500/20'
-  }`;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6" id="search-missing-view">
@@ -207,13 +204,13 @@ export default function SearchMissingForm({ onTriggerReunion }: SearchMissingFor
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-2">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <Camera size={14} className="text-rose-600" />
+                <Camera size={14} className="text-blue-600" />
                 Fotos de la persona
               </label>
               {photos.length > 0 && <span className="text-[11px] font-semibold text-slate-400">{photos.length}/{MAX_IMAGES}</span>}
             </div>
 
-            <PhotoUploader photos={photos} max={MAX_IMAGES} accent="rose" error={!!error} disabled={isAnalyzing} onAdd={addFiles} onRemove={removePhoto} />
+            <PhotoUploader photos={photos} max={MAX_IMAGES} accent="blue" error={!!error} disabled={isAnalyzing} onAdd={addFiles} onRemove={removePhoto} />
             {error && (
               <p className="text-xs text-red-600 mt-1 flex items-center gap-1" id="search-error">
                 <AlertCircle size={13} className="shrink-0" />{error}
@@ -233,7 +230,7 @@ export default function SearchMissingForm({ onTriggerReunion }: SearchMissingFor
                     maxLength={80}
                     value={qNombre}
                     onChange={(e) => { setQNombre(e.target.value); setIdError(null); }}
-                    className={idInputClass}
+                    className={inputClasses('rose', !!idError)}
                   />
                 </div>
                 <div className="space-y-1.5">

@@ -11,13 +11,15 @@ import PhotoUploader, { Photo } from './form/PhotoUploader';
 import HelpModal, { HelpStep } from './form/HelpModal';
 import DocumentInput from './form/DocumentInput';
 import LocationCombobox, { useSavedLocations } from './form/LocationCombobox';
+import { useFormDraft } from './form/useFormDraft';
+import Field, { inputClasses } from './form/Field';
 
 interface ReportFoundFormProps {
   onAddPerson: (person: FoundPerson) => void;
 }
 
 // ponytail: capacity knob — backend accepts varias fotos del mismo registro
-const MAX_IMAGES = 5;
+const MAX_IMAGES = 1;
 
 // Teléfono VE: prefijo elegido + 7 dígitos. Ej: 0424 + 8135166 -> 04248135166.
 const PHONE_PREFIXES = ['0424', '0412', '0416', '0426', '0422'];
@@ -29,23 +31,21 @@ const HELP_STEPS: HelpStep[] = [
   { n: 4, t: 'Indexación Facial', d: 'Al enviar, el rostro se procesa y queda disponible de inmediato para las búsquedas.' },
 ];
 
-const inputClass =
-  'w-full px-3.5 py-2.5 bg-white border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-xl text-slate-800 text-sm placeholder-slate-400 outline-none transition-all font-medium shadow-sm';
-
 export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
   const [showHelp, setShowHelp] = useState(false);
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [isChild, setIsChild] = useState(false);
-  const [nombre, setNombre] = useState('');
-  const [apellido, setApellido] = useState('');
-  const [docTipo, setDocTipo] = useState('V');
-  const [docNumero, setDocNumero] = useState('');
-  const [refugio, setRefugio] = useState('');
-  const [ubicacion, setUbicacion] = useState('');
-  const [telPrefijo, setTelPrefijo] = useState('0424');
-  const [telNumero, setTelNumero] = useState('');
-  const [docResponsable, setDocResponsable] = useState('');
-  const [descripcion, setDescripcion] = useState('');
+  // Persistido entre cambios de pestaña (draft 'report.*')
+  const [photos, setPhotos] = useFormDraft<Photo[]>('report.photos', []);
+  const [isChild, setIsChild] = useFormDraft('report.isChild', false);
+  const [nombre, setNombre] = useFormDraft('report.nombre', '');
+  const [apellido, setApellido] = useFormDraft('report.apellido', '');
+  const [docTipo, setDocTipo] = useFormDraft('report.docTipo', 'V');
+  const [docNumero, setDocNumero] = useFormDraft('report.docNumero', '');
+  const [refugio, setRefugio] = useFormDraft('report.refugio', '');
+  const [ubicacion, setUbicacion] = useFormDraft('report.ubicacion', '');
+  const [telPrefijo, setTelPrefijo] = useFormDraft('report.telPrefijo', '0424');
+  const [telNumero, setTelNumero] = useFormDraft('report.telNumero', '');
+  const [docResponsable, setDocResponsable] = useFormDraft('report.docResponsable', '');
+  const [descripcion, setDescripcion] = useFormDraft('report.descripcion', '');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<ResultadoRegistro | null>(null);
@@ -140,9 +140,6 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
     setResult(null);
     setErrors({});
   };
-
-  const fieldClass = (field?: string) =>
-    field && errors[field] ? `${inputClass} border-red-400 focus:border-red-500 focus:ring-red-500/20` : inputClass;
 
   const FieldError = ({ field }: { field: string }) =>
     errors[field] ? <p className="text-xs text-red-600 mt-1 flex items-center gap-1"><AlertCircle size={13} className="shrink-0" />{errors[field]}</p> : null;
@@ -272,18 +269,8 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
                 Datos de la persona
               </legend>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    Nombre <span className="text-slate-400 font-medium normal-case">(opcional)</span>
-                  </label>
-                  <input type="text" placeholder="Ej: Juan" maxLength={80} value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} id="person-name-input" />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    Apellido <span className="text-slate-400 font-medium normal-case">(opcional)</span>
-                  </label>
-                  <input type="text" placeholder="Ej: Gómez" maxLength={80} value={apellido} onChange={(e) => setApellido(e.target.value)} className={inputClass} id="person-lastname-input" />
-                </div>
+                <Field label="Nombre" optional value={nombre} onChange={setNombre} placeholder="Ej: Juan" maxLength={80} id="person-name-input" />
+                <Field label="Apellido" optional value={apellido} onChange={setApellido} placeholder="Ej: Gómez" maxLength={80} id="person-lastname-input" />
               </div>
 
               <div className="space-y-1.5">
@@ -302,33 +289,22 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
               Ubicación y contacto
             </legend>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                Refugio, Hospital o Ente Receptivo <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                {!refugio && (
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <Building size={16} className="text-slate-400" />
-                  </div>
-                )}
-                <input
-                  type="text"
-                  placeholder="Ej: Refugio Polideportivo de Catia"
-                  value={refugio}
-                  onChange={(e) => { setRefugio(e.target.value); clearError('refugio'); }}
-                  className={`${fieldClass('refugio')} ${refugio ? 'pl-3.5' : 'pl-10'}`}
-                  id="refugio-input"
-                />
-              </div>
-              <FieldError field="refugio" />
-            </div>
+            <Field
+              label="Refugio, Hospital o Ente Receptivo"
+              required
+              value={refugio}
+              onChange={(v) => { setRefugio(v); clearError('refugio'); }}
+              placeholder="Ej: Refugio Polideportivo de Catia"
+              icon={Building}
+              error={errors.refugio}
+              id="refugio-input"
+            />
 
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
                 Dónde se encontró <span className="text-slate-400 font-medium normal-case">(opcional)</span>
               </label>
-              <LocationCombobox value={ubicacion} onChange={setUbicacion} options={locations} onForget={forget} inputClass={inputClass} id="ubicacion-input" />
+              <LocationCombobox value={ubicacion} onChange={setUbicacion} options={locations} onForget={forget} accent="blue" id="ubicacion-input" />
             </div>
 
             <div className="space-y-1.5">
@@ -357,7 +333,7 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
                     maxLength={7}
                     value={telNumero}
                     onChange={(e) => { setTelNumero(e.target.value.replace(/\D/g, '')); clearError('telefono'); }}
-                    className={`${fieldClass('telefono')} pl-10`}
+                    className={inputClasses('blue', !!errors.telefono, true)}
                     id="contact-phone-input"
                   />
                 </div>
@@ -366,43 +342,32 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
             </div>
 
             {isChild && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                  Identificación del responsable <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="Ej: 11111111"
-                  maxLength={9}
-                  value={docResponsable}
-                  onChange={(e) => { setDocResponsable(e.target.value.replace(/\D/g, '')); clearError('docResponsable'); }}
-                  className={fieldClass('docResponsable')}
-                  id="doc-responsable-input"
-                />
-                {errors.docResponsable ? (
-                  <FieldError field="docResponsable" />
-                ) : (
-                  <p className="text-[11px] text-amber-600">Obligatorio para registrar a un menor.</p>
-                )}
-              </div>
+              <Field
+                label="Identificación del responsable"
+                required
+                numeric
+                value={docResponsable}
+                onChange={(v) => { setDocResponsable(v); clearError('docResponsable'); }}
+                placeholder="Ej: 11111111"
+                maxLength={9}
+                error={errors.docResponsable}
+                hint="Obligatorio para registrar a un menor."
+                id="doc-responsable-input"
+              />
             )}
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center justify-between">
-                <span>Descripción <span className="text-slate-400 font-medium normal-case">(opcional)</span></span>
-                <span className="text-[10px] font-semibold text-slate-400 normal-case tabular-nums">{descripcion.length}/350</span>
-              </label>
-              <textarea
-                placeholder="Describe ropa, señas, estado físico, edad aproximada..."
-                rows={4}
-                maxLength={350}
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                className={`${inputClass} resize-none`}
-                id="observation-input"
-              />
-            </div>
+            <Field
+              label="Descripción"
+              optional
+              multiline
+              counter
+              value={descripcion}
+              onChange={setDescripcion}
+              placeholder="Describe ropa, señas, estado físico, edad aproximada..."
+              maxLength={350}
+              rows={4}
+              id="observation-input"
+            />
           </fieldset>
 
           <p className="text-[11px] text-slate-400 flex items-center gap-1.5">

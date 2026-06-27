@@ -7,6 +7,7 @@
  */
 import React, { useState } from 'react';
 import { MapPin, ChevronDown, X } from 'lucide-react';
+import { inputClasses } from './Field';
 
 const LOCATIONS_KEY = 'ven_saved_locations';
 
@@ -38,12 +39,14 @@ interface Props {
   onChange: (v: string) => void;
   options: string[];
   onForget: (v: string) => void;
-  inputClass: string;
+  accent?: 'blue' | 'rose';
   id?: string;
 }
 
-export default function LocationCombobox({ value, onChange, options, onForget, inputClass, id }: Props) {
+export default function LocationCombobox({ value, onChange, options, onForget, accent = 'blue', id }: Props) {
   const [open, setOpen] = useState(false);
+  // pr-10 deja sitio al chevron cuando hay opciones guardadas
+  const cls = options.length ? inputClasses(accent).replace('pr-3.5', 'pr-10') : inputClasses(accent);
 
   return (
     <div className="relative">
@@ -55,7 +58,7 @@ export default function LocationCombobox({ value, onChange, options, onForget, i
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => options.length && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className={`${inputClass} ${options.length ? 'pr-10' : ''}`}
+        className={cls}
         id={id}
         autoComplete="off"
       />
