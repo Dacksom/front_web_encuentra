@@ -44,6 +44,7 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
   const [ubicacion, setUbicacion] = useFormDraft('report.ubicacion', '');
   const [telPrefijo, setTelPrefijo] = useFormDraft('report.telPrefijo', '0424');
   const [telNumero, setTelNumero] = useFormDraft('report.telNumero', '');
+  const [docRespTipo, setDocRespTipo] = useFormDraft('report.docRespTipo', 'V');
   const [docResponsable, setDocResponsable] = useFormDraft('report.docResponsable', '');
   const [descripcion, setDescripcion] = useFormDraft('report.descripcion', '');
 
@@ -82,6 +83,7 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
     }
 
     const telefonoResponsable = `${telPrefijo}${telNumero}`;
+    const docResponsableFull = docResponsable.trim() ? `${docRespTipo}-${docResponsable.trim()}` : '';
 
     setErrors({});
     inFlight.current = true;
@@ -97,7 +99,7 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
         refugio,
         ubicacion,
         telefonoResponsable,
-        docResponsable,
+        docResponsable: docResponsableFull,
         descripcion,
       });
       setResult(res);
@@ -135,6 +137,7 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
     setUbicacion('');
     setTelPrefijo('0424');
     setTelNumero('');
+    setDocRespTipo('V');
     setDocResponsable('');
     setDescripcion('');
     setResult(null);
@@ -342,18 +345,25 @@ export default function ReportFoundForm({ onAddPerson }: ReportFoundFormProps) {
             </div>
 
             {isChild && (
-              <Field
-                label="Identificación del responsable"
-                required
-                numeric
-                value={docResponsable}
-                onChange={(v) => { setDocResponsable(v); clearError('docResponsable'); }}
-                placeholder="Ej: 11111111"
-                maxLength={9}
-                error={errors.docResponsable}
-                hint="Obligatorio para registrar a un menor."
-                id="doc-responsable-input"
-              />
+              <div className="space-y-1.5">
+                <label htmlFor="doc-responsable-input" className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  Identificación del responsable <span className="text-rose-500">*</span>
+                </label>
+                <DocumentInput
+                  tipo={docRespTipo}
+                  numero={docResponsable}
+                  onTipo={setDocRespTipo}
+                  onNumero={(v) => { setDocResponsable(v); clearError('docResponsable'); }}
+                  accent="blue"
+                  error={!!errors.docResponsable}
+                  numeroId="doc-responsable-input"
+                />
+                {errors.docResponsable ? (
+                  <FieldError field="docResponsable" />
+                ) : (
+                  <p className="text-[11px] text-amber-600">Obligatorio para registrar a un menor.</p>
+                )}
+              </div>
             )}
 
             <Field
