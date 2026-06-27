@@ -119,6 +119,35 @@ const appendIf = (fd: FormData, key: string, val?: string) => {
   if (val && val.trim()) fd.append(key, val.trim());
 };
 
+// iPhone manda fotos en HEIC/HEIF y el back las rechaza. Convertimos a PNG con canvas
+// (Safari/iOS sí decodifica HEIC). Si algo falla, se envía el archivo original.
+const isHeic = (f: File) => /hei[cf]/i.test(f.type) || /\.(heic|heif)$/i.test(f.name);
+
+async function toPngIfHeic(file: File): Promise<File> {
+  if (!isHeic(file)) return file;
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return file;
+    ctx.drawImage(img, 0, 0);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) return file;
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.png', { type: 'image/png' });
+  } catch {
+    return file; // no se pudo decodificar -> se envía tal cual
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+const prepareFiles = (files: File[]) => Promise.all(files.map(toPngIfHeic));
+
 async function postJson<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',
@@ -176,7 +205,7 @@ export interface BuscarInput {
 
 export async function buscarPersona(input: BuscarInput): Promise<MatchResult[]> {
   const fd = new FormData();
-  input.files.forEach((f) => fd.append('files', f));
+  (await prepareFiles(input.files)).forEach((f) => fd.append('files', f));
   appendIf(fd, 'nombre', input.nombre);
   appendIf(fd, 'apellido', input.apellido);
   appendIf(fd, 'edad', input.edad);
@@ -204,7 +233,7 @@ export interface EncontradoInput {
 
 export async function reportarEncontrado(input: EncontradoInput): Promise<ResultadoRegistro> {
   const fd = new FormData();
-  input.files.forEach((f) => fd.append('files', f));
+  (await prepareFiles(input.files)).forEach((f) => fd.append('files', f));
   fd.append('es_menor', String(input.esMenor));
   if (!input.esMenor) {
     appendIf(fd, 'nombre', input.nombre);

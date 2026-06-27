@@ -9,9 +9,10 @@ import { Search, PlusCircle, Heart, X } from 'lucide-react';
 
 interface Props {
   onClose: () => void;
+  onSelect: (tab: 'buscar' | 'reportar') => void;
 }
 
-export default function OnboardingModal({ onClose }: Props) {
+export default function OnboardingModal({ onClose, onSelect }: Props) {
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -41,7 +42,11 @@ export default function OnboardingModal({ onClose }: Props) {
         </div>
 
         <div className="grid grid-cols-1 gap-3">
-          <div className="bg-rose-50/60 border border-rose-100 rounded-xl p-4 flex gap-3">
+          <button
+            type="button"
+            onClick={() => onSelect('buscar')}
+            className="text-left bg-rose-50/60 border border-rose-100 rounded-xl p-4 flex gap-3 hover:bg-rose-50 hover:border-rose-300 hover:shadow-md transition-all"
+          >
             <div className="w-10 h-10 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">
               <Search size={20} />
             </div>
@@ -51,9 +56,13 @@ export default function OnboardingModal({ onClose }: Props) {
                 Sube la foto de tu ser querido. Analizamos su rostro y lo comparamos con las personas ya reportadas.
               </p>
             </div>
-          </div>
+          </button>
 
-          <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-4 flex gap-3">
+          <button
+            type="button"
+            onClick={() => onSelect('reportar')}
+            className="text-left bg-blue-50/60 border border-blue-100 rounded-xl p-4 flex gap-3 hover:bg-blue-50 hover:border-blue-300 hover:shadow-md transition-all"
+          >
             <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0">
               <PlusCircle size={20} />
             </div>
@@ -63,7 +72,7 @@ export default function OnboardingModal({ onClose }: Props) {
                 ¿Ayudaste a alguien? Registra su foto y sus datos para que su familia pueda dar con ella. Reporta solo casos reales.
               </p>
             </div>
-          </div>
+          </button>
         </div>
 
         <button

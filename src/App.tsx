@@ -22,7 +22,8 @@ import {
   ShieldAlert,
   Activity,
   Instagram,
-  Mail
+  Mail,
+  Info
 } from 'lucide-react';
 
 import { FoundPerson } from './types';
@@ -35,6 +36,7 @@ import { reportarFalla } from './api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'buscar' | 'reportar' | 'api'>('reportar');
+  const [infoTip, setInfoTip] = useState<'buscar' | 'reportar' | null>(null);
   const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
   const [errorText, setErrorText] = useState('');
   const [errorSending, setErrorSending] = useState(false);
@@ -153,7 +155,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans overflow-x-hidden" id="app-root-container">
-      {showOnboarding && <OnboardingModal onClose={closeOnboarding} />}
+      {showOnboarding && (
+        <OnboardingModal
+          onClose={closeOnboarding}
+          onSelect={(tab) => { setActiveTab(tab); closeOnboarding(); }}
+        />
+      )}
 
       {/* Patriotic Subtle Accent Bar representing the Venezuelan Flag colors */}
       <div className="h-1.5 w-full flex">
@@ -200,34 +207,71 @@ export default function App() {
       {/* Main Container Content */}
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5">
         {/* Main Action Buttons */}
-        <div className="flex mb-5 max-w-4xl mx-auto rounded-xl border-2 border-slate-200 overflow-hidden shadow-sm" role="tablist">
-          <button
-            onClick={() => setActiveTab('buscar')}
-            role="tab"
-            aria-selected={activeTab === 'buscar'}
-            className={`flex-1 basis-1/2 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-2 py-3 text-xs sm:text-base font-bold transition-all duration-300 ${
-              activeTab === 'buscar'
-                ? 'bg-rose-600 text-white shadow-inner'
-                : 'bg-white text-rose-600 hover:bg-rose-50'
-            }`}
-          >
-            <Search size={20} className="shrink-0" />
-            <span className="text-center leading-tight">Buscar Familiar</span>
-          </button>
+        <div className="relative max-w-4xl mx-auto mb-5">
+          {infoTip && <div className="fixed inset-0 z-40" onClick={() => setInfoTip(null)} />}
 
-          <button
-            onClick={() => setActiveTab('reportar')}
-            role="tab"
-            aria-selected={activeTab === 'reportar'}
-            className={`flex-1 basis-1/2 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-2 py-3 text-xs sm:text-base font-bold border-l-2 border-slate-200 transition-all duration-300 ${
-              activeTab === 'reportar'
-                ? 'bg-blue-600 text-white shadow-inner'
-                : 'bg-white text-blue-600 hover:bg-blue-50'
-            }`}
-          >
-            <PlusCircle size={20} className="shrink-0" />
-            <span className="text-center leading-tight">Reportar Persona Encontrada</span>
-          </button>
+          <div className="flex rounded-xl border-2 border-slate-200 overflow-hidden shadow-sm" role="tablist">
+            <button
+              onClick={() => { setActiveTab('buscar'); setInfoTip(null); }}
+              role="tab"
+              aria-selected={activeTab === 'buscar'}
+              className={`relative flex-1 basis-1/2 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-2 py-3 text-xs sm:text-base font-bold transition-all duration-300 ${
+                activeTab === 'buscar'
+                  ? 'bg-rose-600 text-white shadow-inner'
+                  : 'bg-white text-rose-600 hover:bg-rose-50'
+              }`}
+            >
+              <Search size={20} className="shrink-0" />
+              <span className="text-center leading-tight">Buscar Familiar</span>
+              <span
+                role="button"
+                tabIndex={0}
+                aria-label="Qué es Buscar Familiar"
+                onClick={(e) => { e.stopPropagation(); setInfoTip(infoTip === 'buscar' ? null : 'buscar'); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setInfoTip(infoTip === 'buscar' ? null : 'buscar'); } }}
+                className="absolute top-1 right-1 inline-flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity"
+              >
+                <Info size={15} />
+              </span>
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('reportar'); setInfoTip(null); }}
+              role="tab"
+              aria-selected={activeTab === 'reportar'}
+              className={`relative flex-1 basis-1/2 flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-2 py-3 text-xs sm:text-base font-bold border-l-2 border-slate-200 transition-all duration-300 ${
+                activeTab === 'reportar'
+                  ? 'bg-blue-600 text-white shadow-inner'
+                  : 'bg-white text-blue-600 hover:bg-blue-50'
+              }`}
+            >
+              <PlusCircle size={20} className="shrink-0" />
+              <span className="text-center leading-tight">Reportar Persona Encontrada</span>
+              <span
+                role="button"
+                tabIndex={0}
+                aria-label="Qué es Reportar Persona Encontrada"
+                onClick={(e) => { e.stopPropagation(); setInfoTip(infoTip === 'reportar' ? null : 'reportar'); }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); setInfoTip(infoTip === 'reportar' ? null : 'reportar'); } }}
+                className="absolute top-1 right-1 inline-flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity"
+              >
+                <Info size={15} />
+              </span>
+            </button>
+          </div>
+
+          {infoTip === 'buscar' && (
+            <div className="absolute z-50 top-full mt-2 left-0 w-72 max-w-[calc(100%-1rem)] bg-white border border-rose-200 rounded-xl shadow-lg p-3.5 text-left">
+              <p className="text-xs font-bold text-rose-900 mb-1">Buscar familiar</p>
+              <p className="text-xs text-slate-600 leading-snug">Sube la foto de tu ser querido. Analizamos su rostro y lo comparamos con las personas ya reportadas.</p>
+            </div>
+          )}
+          {infoTip === 'reportar' && (
+            <div className="absolute z-50 top-full mt-2 right-0 w-72 max-w-[calc(100%-1rem)] bg-white border border-blue-200 rounded-xl shadow-lg p-3.5 text-left">
+              <p className="text-xs font-bold text-blue-900 mb-1">Reportar persona encontrada</p>
+              <p className="text-xs text-slate-600 leading-snug">¿Ayudaste a alguien? Registra su foto y sus datos para que su familia pueda dar con ella. Reporta solo casos reales.</p>
+            </div>
+          )}
         </div>
 
 
