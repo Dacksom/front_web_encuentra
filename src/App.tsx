@@ -291,6 +291,7 @@ export default function App() {
         )}
 
         {/* Global Database Status (placed below active form) */}
+        {/* ponytail: badges de totales ocultos hasta conectarlos al back. NO borrar — reactivar luego.
         <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
           {[
             { label: 'Rostros encontrados', value: foundPersons.length, color: 'bg-emerald-400' },
@@ -314,6 +315,7 @@ export default function App() {
             </div>
           ))}
         </div>
+        */}
       </main>
 
       {/* Main Footer */}

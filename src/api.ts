@@ -119,30 +119,20 @@ const appendIf = (fd: FormData, key: string, val?: string) => {
   if (val && val.trim()) fd.append(key, val.trim());
 };
 
-// iPhone manda fotos en HEIC/HEIF y el back las rechaza. Convertimos a PNG con canvas
-// (Safari/iOS sí decodifica HEIC). Si algo falla, se envía el archivo original.
-const isHeic = (f: File) => /hei[cf]/i.test(f.type) || /\.(heic|heif)$/i.test(f.name);
+// iPhone manda fotos en HEIC/HEIF y el back las rechaza. Los navegadores NO decodifican
+// HEIC de forma fiable (ni con <img>/canvas), así que usamos heic2any (libheif wasm).
+const isHeic = (f: File) =>
+  /hei[cf]/i.test(f.type) || /\.(heic|heif)$/i.test(f.name) || f.type === '' && /\.(heic|heif)$/i.test(f.name);
 
 async function toPngIfHeic(file: File): Promise<File> {
   if (!isHeic(file)) return file;
-  const url = URL.createObjectURL(file);
   try {
-    const img = new Image();
-    img.src = url;
-    await img.decode();
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return file;
-    ctx.drawImage(img, 0, 0);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-    if (!blob) return file;
+    const heic2any = (await import('heic2any')).default;
+    const out = await heic2any({ blob: file, toType: 'image/png' });
+    const blob = Array.isArray(out) ? out[0] : out;
     return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.png', { type: 'image/png' });
   } catch {
-    return file; // no se pudo decodificar -> se envía tal cual
-  } finally {
-    URL.revokeObjectURL(url);
+    return file; // conversión falló -> se envía tal cual (último recurso)
   }
 }
 
