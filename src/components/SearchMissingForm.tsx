@@ -217,13 +217,17 @@ export default function SearchMissingForm({ onTriggerReunion }: SearchMissingFor
               </p>
             )}
 
-            {/* Identity: requerido al menos nombre O cédula */}
-            <div className="space-y-1.5 pt-1">
+            {/* Identidad de la persona buscada: basta UNO de los dos */}
+            <div className="space-y-2 pt-1">
+              <div>
+                <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Datos de la persona que buscas <span className="text-rose-500">*</span>
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Completa <strong>solo uno</strong>: su nombre o su cédula (no hacen falta ambos).</p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    Nombre <span className="text-rose-500">*</span>
-                  </label>
+                  <label className="text-[11px] font-semibold text-slate-500 normal-case block">Nombre</label>
                   <input
                     type="text"
                     placeholder="Nombre de quien buscas"
@@ -234,9 +238,7 @@ export default function SearchMissingForm({ onTriggerReunion }: SearchMissingFor
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-                    Cédula <span className="text-rose-500">*</span>
-                  </label>
+                  <label className="text-[11px] font-semibold text-slate-500 normal-case block">Cédula</label>
                   <DocumentInput
                     tipo={qDocTipo}
                     numero={qDocNumero}
@@ -247,10 +249,8 @@ export default function SearchMissingForm({ onTriggerReunion }: SearchMissingFor
                   />
                 </div>
               </div>
-              {idError ? (
+              {idError && (
                 <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={13} className="shrink-0" />{idError}</p>
-              ) : (
-                <p className="text-[11px] text-slate-400">Indica al menos uno: nombre o cédula.</p>
               )}
             </div>
           </div>

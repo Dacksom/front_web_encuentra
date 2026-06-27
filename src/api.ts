@@ -10,9 +10,32 @@ import { FoundPerson, MatchResult } from './types';
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '');
 
-/** Las fotos del back pueden venir como ruta relativa; las llevamos a URL absoluta. */
-export const resolveImageUrl = (u: string): string =>
-  !u ? u : /^(https?:|data:|blob:)/.test(u) ? u : `${API_BASE}${u.startsWith('/') ? '' : '/'}${u}`;
+/**
+ * Origen para las fotos. El back puede enviar URLs completas o rutas relativas
+ * (ej. /fotos/personas/abc.jpg). Si solo llega la ruta, le anteponemos este origen.
+ * Prioridad: VITE_MEDIA_URL -> origen de VITE_API_URL (si es absoluta) -> '' (relativo).
+ */
+const MEDIA_BASE = (() => {
+  const explicit = import.meta.env.VITE_MEDIA_URL;
+  if (explicit) return explicit.replace(/\/$/, '');
+  const api = import.meta.env.VITE_API_URL;
+  if (api && /^https?:/.test(api)) {
+    try {
+      return new URL(api).origin;
+    } catch {
+      /* ignora URL inválida */
+    }
+  }
+  return '';
+})();
+
+/** Devuelve siempre una URL utilizable: deja las completas y completa las relativas. */
+export const resolveImageUrl = (u: string): string => {
+  if (!u) return u;
+  if (/^(https?:|data:|blob:)/.test(u)) return u; // ya es URL completa
+  const path = u.startsWith('/') ? u : `/${u}`;
+  return MEDIA_BASE ? `${MEDIA_BASE}${path}` : path; // sin base configurada -> ruta relativa
+};
 
 // ---- Tipos de respuesta (swagger) ----
 export interface Candidato {
