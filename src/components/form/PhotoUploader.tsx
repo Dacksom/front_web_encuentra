@@ -9,6 +9,16 @@ import { Upload, X, Camera } from 'lucide-react';
 
 export type Photo = { file: File; url: string };
 
+/**
+ * Agrega imágenes a la lista respetando `max`: filtra no-imágenes y crea el
+ * objectURL de preview. Compartido por las dos vistas (buscar/reportar).
+ */
+export function appendImages(prev: Photo[], files: FileList | File[], max: number): Photo[] {
+  const imgs = Array.from(files).filter((f) => f.type.startsWith('image/'));
+  const room = max - prev.length;
+  return [...prev, ...imgs.slice(0, room).map((file) => ({ file, url: URL.createObjectURL(file) }))];
+}
+
 const ACCENTS = {
   rose: {
     zoneEmpty: 'border-rose-600 bg-rose-50/40',

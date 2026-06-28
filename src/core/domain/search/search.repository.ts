@@ -4,6 +4,6 @@
 import { MatchResult, SearchByImageInput } from './match-result.model';
 
 export interface SearchRepository {
-  /** POST /api/search — devuelve coincidencias ordenadas por semejanza. */
+  /** POST /buscados — devuelve coincidencias ordenadas por semejanza (multipart). */
   searchByImage(input: SearchByImageInput): Promise<MatchResult[]>;
 }

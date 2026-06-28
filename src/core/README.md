@@ -1,35 +1,40 @@
-# Core — Clean Architecture
+# core/ — Lógica de negocio y acceso a la API
 
-Núcleo de la app **Reencuentro S.O.S**. Dependencias apuntan **hacia adentro**:
+Clean Architecture en 3 capas + un composition root. La UI **solo** importa desde
+`container.ts`; nunca llama a la red ni importa repositorios directamente.
 
 ```
-infrastructure ──▶ application ──▶ domain
-   (HTTP, BD)        (casos uso,        (modelos puros
-                      DTOs, mappers)     + interfaces repo)
+vista → container.ts → use-case → repository → http-client → backend
 ```
-
-Regla de oro: **una capa solo importa de las de adentro**.
-`domain` no importa de nadie. `application` importa solo `domain`.
-`infrastructure` implementa interfaces de `domain`/`application`. La UI
-(`src/components`) solo habla con `application` (casos de uso).
 
 ## Capas
 
-| Carpeta | Qué vive aquí | Qué NO debe vivir |
-|---|---|---|
-| `domain/` | Modelos (entidades camelCase), interfaces de repositorio, reglas de negocio puras | `axios`, React, snake_case del back |
-| `application/` | Casos de uso + DTOs (forma del back) + **mappers** (front↔back) | Llamadas HTTP concretas, JSX |
-| `infrastructure/` | Implementaciones de repos (HTTP, mock en memoria) | Reglas de negocio |
-| `shared/` | Tipos transversales (`Result`, paginación) | Lógica de un solo dominio |
+### `domain/`  (el QUÉ)
+Modelos de negocio en camelCase (`FoundPerson`, `MatchResult`, `RegisterFoundPersonInput`…)
+y **contratos** de repositorio (interfaces). No sabe de HTTP ni de Vite. Una
+carpeta por feature: `found-person/`, `search/`, `report/`.
 
-## Áreas (dominios)
+### `application/`  (orquestación)
+- **use-cases/** — funciones que reciben un repo y devuelven la operación lista
+  (`makeSearchByImage`, `makeRegisterFoundPerson`, …). aquí irían
+  reglas que no dependan de infraestructura.
+- **dto/** — formas snake_case tal como las manda/devuelve el backend
+  (`CandidatoDto`, `ResultadoBusquedaDto`). NO se usan en la UI.
+- **mappers/** — convierten DTO ⇄ modelo de dominio (`mapBusqueda`).
 
-Cada capa se subdivide por área: `found-person` y `search`. Para crear un
-área nueva, copia la estructura de `found-person` (es la referencia completa).
+### `infrastructure/`  (el CÓMO)
+- **http/** — `http-client` (`postForm`/`postJson` sobre axios, con manejo del
+  error 422 de FastAPI), `media-url` (resolver URLs de imágenes), `heic`
+  (HEIC→PNG), `form-data` (helper `appendIf`).
+- **found-person/ · search/ · report/** — repositorios HTTP que arman el
+  `FormData`/JSON y pegan a los endpoints reales:
+  `POST /encontrados`, `POST /buscados`, `POST /reportes/falla|publicacion`.
 
-## Flujo de mappers (lo que pidió el negocio)
+### `container.ts`  (composition root)
+Único lugar donde se cablean repos + use-cases. Exporta a la UI:
+`buscarPersona`, `reportarEncontrado`, `reportarFalla`, `reportarPublicacion`,
+`hasValidCi` y los tipos que la UI necesita.
 
-- **Front → Back** (`*-request.mapper.ts`): modelo del front (camelCase) → DTO
-  request (snake_case) que se envía en `POST`.
-- **Back → Front** (`*-response.mapper.ts`): DTO response (snake_case) de un
-  `GET`/`list` → modelo del front (camelCase) que consume la UI.
+## Para tests / mock
+Reemplaza las fábricas `create*HttpRepository` por dobles que cumplan el mismo
+contrato de dominio e inyéctalos en los use-cases.
