@@ -191,6 +191,7 @@ export interface BuscarInput {
   docTipo?: string;
   docNumero?: string;
   telefonoContacto?: string;
+  limite?: number;
 }
 
 export async function buscarPersona(input: BuscarInput): Promise<MatchResult[]> {
@@ -202,6 +203,9 @@ export async function buscarPersona(input: BuscarInput): Promise<MatchResult[]> 
   appendIf(fd, 'doc_tipo', input.docTipo);
   appendIf(fd, 'doc_numero', input.docNumero);
   appendIf(fd, 'telefono_contacto', input.telefonoContacto);
+  // limite: min 30, max 50 (tope de la API)
+  const limite = Math.min(50, Math.max(30, input.limite ?? 30));
+  fd.append('limite', String(limite));
   const res = await postForm<ResultadoBusqueda>('/buscados', fd);
   return res.coincidencias.map(candidatoToMatch);
 }
