@@ -22,7 +22,7 @@ interface ReportFoundFormProps {
 const MAX_IMAGES = 1;
 
 // Teléfono VE: prefijo elegido + 7 dígitos. Ej: 0424 + 8135166 -> 04248135166.
-const PHONE_PREFIXES = ['0424', '0412', '0416', '0426', '0422'];
+const PHONE_PREFIXES = ['0414','0424', '0412', '0416', '0426', '0422'];
 
 const HELP_STEPS: HelpStep[] = [
   { n: 1, t: 'Capturar Foto', d: 'Carga una o varias fotos. El rostro debe estar bien iluminado y de frente.' },
