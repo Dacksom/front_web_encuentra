@@ -7,6 +7,7 @@
  */
 import React from 'react';
 import { inputClasses } from './Field';
+import { RING } from '../ui/accents';
 
 export const DOC_TYPES = ['V', 'E', 'J', 'P', 'G', 'C', 'R'];
 
@@ -21,9 +22,7 @@ interface Props {
 }
 
 export default function DocumentInput({ tipo, numero, onTipo, onNumero, accent, error, numeroId }: Props) {
-  const selectCls = `px-3 py-2.5 font-bold shrink-0 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm outline-none transition-all shadow-sm focus:ring-2 ${
-    accent === 'rose' ? 'focus:border-rose-500 focus:ring-rose-500/20' : 'focus:border-blue-500 focus:ring-blue-500/20'
-  }`;
+  const selectCls = `px-3 py-2.5 font-bold shrink-0 bg-white border border-slate-200 rounded-xl text-slate-800 text-sm outline-none transition-all shadow-sm focus:ring-2 ${RING[accent]}`;
 
   return (
     <div className="flex gap-2">

@@ -1,12 +1,10 @@
 /**
- * Contrato del repositorio. La infraestructura lo implementa (HTTP, mock).
- * El dominio define el QUÉ; el CÓMO vive en infrastructure.
+ * Contrato del repositorio de personas encontradas.
+ * El dominio define el QUÉ; la infraestructura implementa el CÓMO (HTTP).
  */
-import { FoundPerson } from './found-person.model';
+import { RegisterFoundPersonInput, ResultadoRegistro } from './found-person.model';
 
 export interface FoundPersonRepository {
-  /** GET /api/found-persons — lista para indexado/cotejo. */
-  list(): Promise<FoundPerson[]>;
-  /** POST /api/report — registra e indexa una persona hallada. */
-  register(person: FoundPerson): Promise<FoundPerson>;
+  /** POST /encontrados — registra e indexa una persona hallada (multipart). */
+  register(input: RegisterFoundPersonInput): Promise<ResultadoRegistro>;
 }

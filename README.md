@@ -1,54 +1,78 @@
-# Reencuentro S.O.S - Plataforma Humanitaria de Reconocimiento Facial (Venezuela)
+# VzlaEncuentra — Plataforma Humanitaria de Reconocimiento Facial (Venezuela)
 
-Esta plataforma web interactiva y moderna está diseñada para ayudar a identificar y reunir a personas desaparecidas o encontradas tras situaciones de emergencia o desastres naturales en Venezuela. Integra una experiencia de usuario altamente pulida en React, diseñada para conectarse directamente con servicios de reconocimiento facial basados en **DeepFace** y bases de datos vectoriales con **ChromaDB**.
+App web para reunir familias tras emergencias o desastres en Venezuela. Tiene
+**dos flujos** y un reporte de fallas:
 
-## 🚀 Características Clave
+1. **Buscar Familiar** — un familiar sube una foto y el backend devuelve
+   coincidencias por reconocimiento facial.
+2. **Reportar Persona Encontrada** — un rescatista registra a una persona hallada
+   (con protección especial para menores) para que su familia pueda dar con ella.
 
-- **Cotejo Facial de Alta Precisión**: Interfaz de búsqueda de familiares cargando una imagen frontal clara, simulando el pipeline matemático de distancia coseno de embeddings faciales de ChromaDB.
-- **Registro Seguro de Personas Encontradas**: Formulario optimizado para rescatistas y administradores de albergues para indexar nuevos rostros en tiempo real.
-- **Protección de Menores de Edad**: Switch inteligente que oculta automáticamente campos confidenciales como nombres, cédulas de identidad o ubicaciones exactas (dirección física) cuando se reporta a un niño/a, permitiendo el reencuentro seguro únicamente por parentesco validado y cotejo facial.
-- **Guía de Integración API Completa**: Consola interactiva para desarrolladores que contiene plantillas de adaptadores listos para producción en Express (Node.js) y Python, mapeados directamente a tus clases `LoadImage` y `SearchImage`.
-- **Procedimientos de Ayuda Integrados**: Cada vista cuenta con un botón interactivo de ayuda detallada sobre el protocolo y flujo de rescate humanitario.
+El reconocimiento facial (DeepFace + ChromaDB) vive en el **backend**; este repo
+es solo el frontend que lo consume.
 
-## 🛠️ Tecnologías Utilizadas
+> ¿Eres dev nuevo? Empieza por **[ONBOARDING.md](./ONBOARDING.md)**.
 
-- **Frontend**: React 19 (TypeScript), Vite, Tailwind CSS v4, Lucide React (Iconografía).
-- **IA y Procesamiento Vectorial (Backend de Referencia)**: DeepFace (Facenet), ChromaDB.
+## 🛠️ Stack
 
-## 📦 Estructura del Proyecto
+- **React 19** + **TypeScript** + **Vite 6**
+- **Tailwind CSS v4** (estilos), **lucide-react** (iconos)
+- **axios** (cliente HTTP hacia el backend)
+- **Zod** (validación de formularios)
+- **heic2any** (convierte fotos HEIC de iPhone a PNG antes de subirlas)
 
-```bash
-├── src/
-│   ├── App.tsx                    # Componente principal y gestor de estados locales
-│   ├── types.ts                   # Definición de interfaces TypeScript (FoundPerson, MatchResult)
-│   ├── data.ts                    # Registros semilla para demostración inmediata
-│   ├── components/
-│   │   ├── SearchMissingForm.tsx  # Formulario de búsqueda con simulación de pipeline Facenet
-│   │   ├── ReportFoundForm.tsx    # Formulario para rescatistas con soporte de cámara HTML5 y switch de menores
-│   │   └── ApiIntegrationGuide.tsx# Guía para desarrolladores con fragmentos de código listos
-│   ├── index.css                  # Estilos globales y configuración del tema tipográfico (Inter, JetBrains Mono)
-│   └── main.tsx                   # Punto de entrada de la aplicación
-├── package.json                   # Dependencias del sistema
-└── README.md                      # Este archivo informativo
+## 📦 Estructura
+
+```
+src/
+  App.tsx              # Shell: layout + navegación entre vistas + modales
+  main.tsx             # Entry point
+  index.css            # Estilos globales / tema tipográfico
+
+  core/                # Lógica de negocio y acceso a la API (Clean Architecture)
+    domain/            #   modelos + contratos de repositorio (el QUÉ)
+    application/       #   casos de uso, DTOs y mappers
+    infrastructure/    #   implementación HTTP real (el CÓMO)
+    container.ts       #   composition root: lo que importa la UI
+  ↳ ver src/core/README.md
+
+  components/          # UI reutilizable (sin lógica de negocio)
+    layout/            #   FlagBar, Header, Footer
+    modals/            #   Onboarding, ErrorReport, Help, CandidateDetail
+    form/              #   inputs y controles de formulario reutilizables
+  ↳ ver src/components/README.md
+
+  views/               # Una carpeta por pantalla (vista + sus piezas + su schema)
+    search/            #   Buscar Familiar
+    report/            #   Reportar Persona Encontrada
+  ↳ ver src/views/README.md
 ```
 
-## ⚙️ Instrucciones de Inicialización y Desarrollo
+**Flujo de datos:** `vista → core/container → use-case → repository → http-client → backend`
 
-1. **Instalar Dependencias**:
-   ```bash
-   npm install
-   ```
+## ⚙️ Desarrollo
 
-2. **Iniciar Servidor de Desarrollo**:
-   ```bash
-   npm run dev
-   ```
+```bash
+npm install        # dependencias
+npm run dev        # servidor de desarrollo en http://localhost:3000
+npm run lint       # tsc --noEmit (chequeo de tipos)
+npm run build      # build de producción a dist/
+npm run preview    # sirve el build
+```
 
-3. **Compilar para Producción**:
-   ```bash
-   npm run build
-   ```
+## 🔌 Variables de entorno
+
+Copia `.env.example` a `.env` y ajusta:
+
+| Variable          | Para qué sirve                                                        | Default              |
+|-------------------|----------------------------------------------------------------------|----------------------|
+| `VITE_API_PROXY`  | Backend al que el dev-server reenvía `/api/*` (solo en `npm run dev`) | `http://localhost:8000` |
+| `VITE_API_URL`    | Base de la API que usa el cliente HTTP                               | `/api`               |
+| `VITE_MEDIA_URL`  | Origen de las fotos cuando el back devuelve rutas relativas          | (vacío → relativo)   |
+
+En desarrollo basta con `VITE_API_PROXY` apuntando a tu backend; el front llama a
+`/api/*` y Vite lo proxea (ver `vite.config.ts`).
 
 ---
 
-*Desarrollado con fines humanitarios para agilizar la unificación familiar y el soporte civil.*
+*Desarrollado con fines humanitarios para agilizar la reunificación familiar.*

@@ -1,28 +1,33 @@
 /**
- * Implementación HTTP de FoundPersonRepository.
+ * Implementación HTTP de FoundPersonRepository → POST /encontrados (multipart).
  */
-import { FoundPerson } from '../../domain/found-person/found-person.model';
-import { FoundPersonRepository } from '../../domain/found-person/found-person.repository';
-import { FoundPersonResponseDto } from '../../application/found-person/dto/found-person-response.dto';
-import { toFoundPersonRequestDto } from '../../application/found-person/mappers/found-person-request.mapper';
 import {
-  mapFoundPersonList,
-  toFoundPerson,
-} from '../../application/found-person/mappers/found-person-response.mapper';
-import { httpClient } from '../http/http-client';
+  RegisterFoundPersonInput,
+  ResultadoRegistro,
+} from '../../domain/found-person/found-person.model';
+import { FoundPersonRepository } from '../../domain/found-person/found-person.repository';
+import { postForm } from '../http/http-client';
+import { appendIf } from '../http/form-data';
+import { prepareFiles } from '../http/heic';
 
 export function createFoundPersonHttpRepository(): FoundPersonRepository {
   return {
-    async list() {
-      const dtos = await httpClient.get<FoundPersonResponseDto[]>('/found-persons');
-      return mapFoundPersonList(dtos);
-    },
-    async register(person: FoundPerson) {
-      const dto = await httpClient.post<FoundPersonResponseDto>(
-        '/report',
-        toFoundPersonRequestDto(person),
-      );
-      return toFoundPerson(dto);
+    async register(input: RegisterFoundPersonInput) {
+      const fd = new FormData();
+      (await prepareFiles(input.files)).forEach((f) => fd.append('files', f));
+      fd.append('es_menor', String(input.esMenor));
+      // nombre/apellido se envían siempre (también para menores); el back decide qué guardar.
+      appendIf(fd, 'nombre', input.nombre);
+      appendIf(fd, 'apellido', input.apellido);
+      appendIf(fd, 'doc_tipo', input.docTipo);
+      appendIf(fd, 'doc_numero', input.docNumero);
+      appendIf(fd, 'refugio', input.refugio);
+      appendIf(fd, 'ubicacion', input.ubicacion);
+      appendIf(fd, 'telefono_responsable', input.telefonoResponsable);
+      appendIf(fd, 'doc_responsable', input.docResponsable);
+      appendIf(fd, 'descripcion', input.descripcion);
+
+      return postForm<ResultadoRegistro>('/encontrados', fd);
     },
   };
 }
